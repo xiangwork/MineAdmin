@@ -1,6 +1,8 @@
 FROM hyperf/hyperf:8.1-alpine-v3.18-swoole
 LABEL maintainer="MineManage Developers <group@stye.cn>" version="1.0" license="MIT" app.name="MineManage"
 
+WORKDIR /opt/www
+
 ##
 # ---------- env settings ----------
 ##
@@ -8,7 +10,7 @@ LABEL maintainer="MineManage Developers <group@stye.cn>" version="1.0" license="
 ARG timezone
 
 ENV TIMEZONE=${timezone:-"Asia/Shanghai"} \
-    APP_ENV=prod \
+    APP_ENV=dev \
     SCAN_CACHEABLE=(true)
 
 # update
@@ -21,10 +23,10 @@ RUN set -ex \
     && cd /etc/php* \
     # - config PHP
     && { \
-        echo "upload_max_filesize=128M"; \
-        echo "post_max_size=128M"; \
-        echo "memory_limit=1G"; \
-        echo "date.timezone=${TIMEZONE}"; \
+    echo "upload_max_filesize=128M"; \
+    echo "post_max_size=128M"; \
+    echo "memory_limit=1G"; \
+    echo "date.timezone=${TIMEZONE}"; \
     } | tee conf.d/99_overrides.ini \
     # - config timezone
     && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
@@ -60,10 +62,6 @@ RUN set -ex && \
     && echo -e "\033[42;37m Build Completed :).\033[0m\n"
 
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
-
-WORKDIR /opt/www
-
-COPY . /opt/www
 
 RUN composer install --no-dev -o && php bin/hyperf.php
 

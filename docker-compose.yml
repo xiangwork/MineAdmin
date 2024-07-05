@@ -1,58 +1,71 @@
-version: '3'
 services:
   # 首先下载前端，https://gitee.com/mineadmin/mineadmin-vue
   # 在后端根目录建立mine-ui目录，把前端文件复制过来。
   # 容器内访问宿主机的地址用：host.docker.internal
   # 宿主机也可以在hosts文件添加：127.0.0.1 host.docker.internal
   # mine-ui的.env.development文件127.0.0.1替换为host.docker.internal
-  nginx-frontend:
-    image: nginx:latest
+  # web:
+  #   image: nginx:latest
+  #   environment:
+  #     - "TIMEZONE=Asia/Shanghai"
+  #   ports:
+  #     - 8101:80
+  #   volumes:
+  #     - ./web/dist:/usr/share/nginx/html
+  #     - ./docker/web/conf.d:/etc/nginx/conf.d
+  #   depends_on:
+  #     - html
+  html:
+    image: node:latest
+    build: ./docker/html
     environment:
       - "TIMEZONE=Asia/Shanghai"
     ports:
-      - 8101:80
+      - "12002:2888"
     volumes:
-      - ./mine-ui/dist:/usr/share/nginx/html
-      - ./docker/nginx-frontend/servers:/etc/nginx/conf.d
-
+      - ./web:/opt/www
+    networks:
+      - hyperf
   # mineadmin的.env的mysql、redis如果连接到宿主机，地址用：host.docker.internal
   # 如果是连接到docker内服务，则用服务名称，如:redis
   hyperf:
+    env_file:
+      - .env
     image: hyperf/hyperf:8.1-alpine-v3.18-swoole
+    build: ./docker/hyperf
     restart: always
     environment:
       - "TIMEZONE=Asia/Shanghai"
       - "APP_PROJECT=hyperf"
       - "APP_SYSTEM_ENV=docker"
-    working_dir: "/opt/www"
-    ports:
-      - 9501:9501
-      - 9502:9502
-      - 9503:9503
     volumes:
-      - ./:/opt/www
+      - .:/opt/www
     entrypoint: ["php", "watch", "-c"]
-
+    networks:
+      - hyperf
   # 没有将volumes映射出来，需要持久化自行百度一下
 
   mysql:
     environment:
       - "TZ=Asia/Shanghai"
-      - MYSQL_ROOT_PASSWORD=12345678
+      - "MYSQL_ROOT_PASSWORD=12345678"
       - "explicit_defaults_for_timestamp=true"
       - "lower_case_table_names=1"
     volumes:
-      - ./docker/mysql/57/my.cnf:/etc/my.cnf/:ro
-      - ./docker/mysql/57/data:/var/lib/mysql/:rw
-      - ./docker/mysql/57/logs:/var/log/mysql/:rw
-    ports:
-      - 3306:3306
-    image: mysql:5.7
+      - ./docker/mysql/my.cnf:/etc/my.cnf/:ro
+      - ./docker/mysql/conf.d:/etc/mysql/mysql.conf.d/:ro
+      - ./docker/mysql/data:/var/lib/mysql/:rw
+      - ./docker/mysql/logs:/var/log/mysql/:rw
+    image: mysql:latest
     restart: always
+    networks:
+      - hyperf
     # command: "--default-authentication-plugin=mysql_native_password"
   redis:
     image: redis
     restart: always
+    networks:
+      - hyperf
   rabbitmq:
     image: rabbitmq:management
     restart: always
@@ -64,3 +77,10 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=mineadmin
       - RABBITMQ_DEFAULT_PASS=123456
+    networks:
+      - hyperf
+networks:
+  hyperf:
+    name: hyperf
+    driver: bridge
+    

@@ -1,6 +1,22 @@
 #!/usr/bin/env php
 <?php
 
+declare(strict_types=1);
+
+/**
+ * This file is part of MineAdmin.
+ *
+ * @link     https://www.mineadmin.com
+ * @document https://doc.mineadmin.com
+ * @contact  root@imoi.cn
+ * @license  https://github.com/mineadmin/MineAdmin/blob/master/LICENSE
+ */
+
+use Hyperf\Contract\ApplicationInterface;
+use Hyperf\Di\ClassLoader;
+use Mine\AppStore\Plugin;
+use Psr\Container\ContainerInterface;
+
 ini_set('display_errors', 'on');
 ini_set('display_startup_errors', 'on');
 ini_set('memory_limit', '1G');
@@ -16,11 +32,11 @@ require BASE_PATH . '/vendor/autoload.php';
 
 // Self-called anonymous function that creates its own scope and keep the global namespace clean.
 (function () {
-    \Mine\AppStore\Plugin::init();
-    Hyperf\Di\ClassLoader::init();
-    /** @var Psr\Container\ContainerInterface $container */
+    Plugin::init();
+    ClassLoader::init();
+    /** @var ContainerInterface $container */
     $container = require BASE_PATH . '/config/container.php';
 
-    $application = $container->get(Hyperf\Contract\ApplicationInterface::class);
+    $application = $container->get(ApplicationInterface::class);
     $application->run();
 })();
