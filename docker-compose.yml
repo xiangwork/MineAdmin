@@ -15,17 +15,18 @@ services:
   #     - ./docker/web/conf.d:/etc/nginx/conf.d
   #   depends_on:
   #     - html
-  html:
-    image: node:latest
-    build: ./docker/html
-    environment:
-      - "TIMEZONE=Asia/Shanghai"
-    ports:
-      - "12002:2888"
-    volumes:
-      - ./web:/opt/www
-    networks:
-      - hyperf
+#  html:
+#    image: node:latest
+#    build: ./docker/html
+#    environment:
+#      - "TIMEZONE=Asia/Shanghai"
+#      - "MINE_NODE_ENV=development"
+#    ports:
+#      - "12002:2888"
+#    volumes:
+#      - ./web:/opt/www:rw
+#    networks:
+#      - hyperf
   # mineadmin的.env的mysql、redis如果连接到宿主机，地址用：host.docker.internal
   # 如果是连接到docker内服务，则用服务名称，如:redis
   hyperf:
@@ -39,16 +40,25 @@ services:
       - "APP_PROJECT=hyperf"
       - "APP_SYSTEM_ENV=docker"
     volumes:
-      - .:/opt/www
+      - .:/opt/www:rw
     entrypoint: ["php", "watch", "-c"]
     networks:
       - hyperf
+    ports:
+      - "9501:9501"
+      - "9502:9502"
+      - "9503:9503"
+    depends_on:
+      - redis
+      - mysql
+      - rabbitmq
   # 没有将volumes映射出来，需要持久化自行百度一下
 
   mysql:
     environment:
       - "TZ=Asia/Shanghai"
       - "MYSQL_ROOT_PASSWORD=12345678"
+      - "MYSQL_DATABASE=mine"
       - "explicit_defaults_for_timestamp=true"
       - "lower_case_table_names=1"
     volumes:
@@ -69,11 +79,6 @@ services:
   rabbitmq:
     image: rabbitmq:management
     restart: always
-    ports:
-      - "4369:4369"
-      - "5672:5672"
-      - "15672:15672"
-      - "25672:25672"
     environment:
       - RABBITMQ_DEFAULT_USER=mineadmin
       - RABBITMQ_DEFAULT_PASS=123456

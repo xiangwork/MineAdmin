@@ -15,10 +15,10 @@ declare(strict_types=1);
 /*
  * 强制重启服务脚本，并清理缓存代理类
  */
-$env = isset($argv[1]) ? $argv[1] : 'dev';
+$env = $argv[1] ?? 'dev';
 
-$httpPort = isset($argv[2]) ? $argv[2] : 9501;
-$messagePort = isset($argv[3]) ? $argv[3] : 9502;
+$httpPort = $argv[2] ?? 9501;
+$messagePort = $argv[3] ?? 9502;
 
 killHyperfPid();
 killHttpPort($httpPort);

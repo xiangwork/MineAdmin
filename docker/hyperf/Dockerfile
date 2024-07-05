@@ -63,7 +63,7 @@ RUN set -ex && \
 
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
 
-RUN composer install --no-dev -o && php bin/hyperf.php
+#RUN composer install && php bin/hyperf.php
 
 EXPOSE 9501 9502 9503
 
